@@ -1,0 +1,332 @@
+@startuml
+set namespaceSeparator ::
+
+class "untitled::common::app_colors.dart::AppColors" {
+  {static} +Color mainBackground
+  {static} +Color cellBackground
+  {static} +Color greyColor
+}
+
+"untitled::common::app_colors.dart::AppColors" o-- "dart::ui::Color"
+
+class "untitled::core::error::exception.dart::ServerException" {
+}
+
+"dart::core::Exception" <|-- "untitled::core::error::exception.dart::ServerException"
+
+class "untitled::core::error::exception.dart::CacheException" {
+}
+
+"dart::core::Exception" <|-- "untitled::core::error::exception.dart::CacheException"
+
+abstract class "untitled::core::error::failure.dart::Failure" {
+  +List<Object?> props
+}
+
+"equatable::src::equatable.dart::Equatable" <|-- "untitled::core::error::failure.dart::Failure"
+
+class "untitled::core::error::failure.dart::ServerFailure" {
+}
+
+"untitled::core::error::failure.dart::Failure" <|-- "untitled::core::error::failure.dart::ServerFailure"
+
+class "untitled::core::error::failure.dart::CacheFailure" {
+}
+
+"untitled::core::error::failure.dart::Failure" <|-- "untitled::core::error::failure.dart::CacheFailure"
+
+abstract class "untitled::core::platform::network_info.dart::NetworkInfo" {
+  +Future<bool> isConnected
+}
+
+class "untitled::core::platform::network_info.dart::NetworkInfoImpl" {
+  +InternetConnectionChecker connectionChecker
+  +Future<bool> isConnected
+}
+
+"untitled::core::platform::network_info.dart::NetworkInfoImpl" o-- "internet_connection_checker::internet_connection_checker.dart::InternetConnectionChecker"
+"untitled::core::platform::network_info.dart::NetworkInfo" <|-- "untitled::core::platform::network_info.dart::NetworkInfoImpl"
+
+abstract class "untitled::core::usecases::use_case.dart::UseCase" {
+  +Future<Either<Failure, Type>> call()
+}
+
+abstract class "untitled::features::home::data::data_sources::person_local_data_source.dart::PersonLocalDataSource" {
+  +Future<List<PersonModel>> getLastPersonsFromCache()
+  +Future<void> personsToCache()
+}
+
+class "untitled::features::home::data::data_sources::person_local_data_source.dart::PersonLocalDataSourceImpl" {
+  +SharedPreferences sharedPreferences
+  +Future<List<PersonModel>> getLastPersonsFromCache()
+  +Future<List<String>> personsToCache()
+}
+
+"untitled::features::home::data::data_sources::person_local_data_source.dart::PersonLocalDataSourceImpl" o-- "shared_preferences::shared_preferences.dart::SharedPreferences"
+"untitled::features::home::data::data_sources::person_local_data_source.dart::PersonLocalDataSource" <|-- "untitled::features::home::data::data_sources::person_local_data_source.dart::PersonLocalDataSourceImpl"
+
+abstract class "untitled::features::home::data::data_sources::person_remote_data_source.dart::PersonRemoteDataSource" {
+  +Future<List<PersonModel>> getAllPersons()
+  +Future<List<PersonModel>> searchPerson()
+}
+
+class "untitled::features::home::data::data_sources::person_remote_data_source.dart::PersonRemoteDataSourceImpl" {
+  +Client client
+  +Future<List<PersonModel>> getAllPersons()
+  +Future<List<PersonModel>> searchPerson()
+  -Future<List<PersonModel>> _getPersonFromUrl()
+}
+
+"untitled::features::home::data::data_sources::person_remote_data_source.dart::PersonRemoteDataSourceImpl" o-- "http::src::client.dart::Client"
+"untitled::features::home::data::data_sources::person_remote_data_source.dart::PersonRemoteDataSource" <|-- "untitled::features::home::data::data_sources::person_remote_data_source.dart::PersonRemoteDataSourceImpl"
+
+class "untitled::features::home::data::models::location_model.dart::LocationModel" {
+  +Map<String, dynamic> toJson()
+}
+
+"untitled::features::home::domain::entities::person_entity.dart::LocationEntity" <|-- "untitled::features::home::data::models::location_model.dart::LocationModel"
+
+class "untitled::features::home::data::models::person_model.dart::PersonModel" {
+  +Map<String, dynamic> toJson()
+}
+
+"untitled::features::home::domain::entities::person_entity.dart::PersonEntity" <|-- "untitled::features::home::data::models::person_model.dart::PersonModel"
+
+class "untitled::features::home::data::repositories::person_repository_impl.dart::PersonRepositoryImpl" {
+  +PersonRemoteDataSource remoteDataSource
+  +PersonLocalDataSource localDataSource
+  +NetworkInfo networkInfo
+  +Future<Either<Failure, List<PersonEntity>>> getAllPersons()
+  +Future<Either<Failure, List<PersonEntity>>> searchPerson()
+  -Future<Either<Failure, List<PersonModel>>> _getPersons()
+}
+
+"untitled::features::home::data::repositories::person_repository_impl.dart::PersonRepositoryImpl" o-- "untitled::features::home::data::data_sources::person_remote_data_source.dart::PersonRemoteDataSource"
+"untitled::features::home::data::repositories::person_repository_impl.dart::PersonRepositoryImpl" o-- "untitled::features::home::data::data_sources::person_local_data_source.dart::PersonLocalDataSource"
+"untitled::features::home::data::repositories::person_repository_impl.dart::PersonRepositoryImpl" o-- "untitled::core::platform::network_info.dart::NetworkInfo"
+"untitled::features::home::domain::repositories::person_repository.dart::PersonRepository" <|-- "untitled::features::home::data::repositories::person_repository_impl.dart::PersonRepositoryImpl"
+
+class "untitled::features::home::domain::entities::person_entity.dart::PersonEntity" {
+  +int id
+  +String name
+  +String status
+  +String species
+  +String type
+  +String gender
+  +LocationEntity origin
+  +LocationEntity location
+  +String image
+  +List<String> episode
+  +DateTime created
+  +List<Object?> props
+}
+
+"untitled::features::home::domain::entities::person_entity.dart::PersonEntity" o-- "untitled::features::home::domain::entities::person_entity.dart::LocationEntity"
+"equatable::src::equatable.dart::Equatable" <|-- "untitled::features::home::domain::entities::person_entity.dart::PersonEntity"
+
+class "untitled::features::home::domain::entities::person_entity.dart::LocationEntity" {
+  +String name
+  +String url
+}
+
+abstract class "untitled::features::home::domain::repositories::person_repository.dart::PersonRepository" {
+  +Future<Either<Failure, List<PersonEntity>>> getAllPersons()
+  +Future<Either<Failure, List<PersonEntity>>> searchPerson()
+}
+
+class "untitled::features::home::domain::use_cases::get_all_persons.dart::GetAllPersons" {
+  +PersonRepository personRepository
+  +Future<Either<Failure, List<PersonEntity>>> call()
+}
+
+"untitled::features::home::domain::use_cases::get_all_persons.dart::GetAllPersons" o-- "untitled::features::home::domain::repositories::person_repository.dart::PersonRepository"
+"untitled::core::usecases::use_case.dart::UseCase" <|-- "untitled::features::home::domain::use_cases::get_all_persons.dart::GetAllPersons"
+
+class "untitled::features::home::domain::use_cases::get_all_persons.dart::PagePersonParams" {
+  +int page
+  +List<Object?> props
+}
+
+"equatable::src::equatable.dart::Equatable" <|-- "untitled::features::home::domain::use_cases::get_all_persons.dart::PagePersonParams"
+
+class "untitled::features::home::domain::use_cases::search_person.dart::SearchPerson" {
+  +PersonRepository personRepository
+  +Future<Either<Failure, List<PersonEntity>>> call()
+}
+
+"untitled::features::home::domain::use_cases::search_person.dart::SearchPerson" o-- "untitled::features::home::domain::repositories::person_repository.dart::PersonRepository"
+"untitled::core::usecases::use_case.dart::UseCase" <|-- "untitled::features::home::domain::use_cases::search_person.dart::SearchPerson"
+
+class "untitled::features::home::domain::use_cases::search_person.dart::SearchPersonParams" {
+  +String query
+  +List<Object?> props
+}
+
+"equatable::src::equatable.dart::Equatable" <|-- "untitled::features::home::domain::use_cases::search_person.dart::SearchPersonParams"
+
+class "untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonListCubit" {
+  +GetAllPersons getAllPersons
+  +int page
+  +void loadPerson()
+  -String _mapFailureToMessage()
+}
+
+"untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonListCubit" o-- "untitled::features::home::domain::use_cases::get_all_persons.dart::GetAllPersons"
+"bloc::src::cubit.dart::Cubit" <|-- "untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonListCubit"
+
+abstract class "untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonListState" {
+  +List<Object?> props
+}
+
+"equatable::src::equatable.dart::Equatable" <|-- "untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonListState"
+
+class "untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonEmpty" {
+  +List<Object?> props
+}
+
+"untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonListState" <|-- "untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonEmpty"
+
+class "untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonLoading" {
+  +List<PersonEntity> oldPersonsList
+  +bool isFirstFetch
+  +List<Object> props
+}
+
+"untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonListState" <|-- "untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonLoading"
+
+class "untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonLoaded" {
+  +List<PersonEntity> personsList
+  +List<Object> props
+}
+
+"untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonListState" <|-- "untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonLoaded"
+
+class "untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonError" {
+  +String message
+  +List<Object?> props
+}
+
+"untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonListState" <|-- "untitled::features::home::presentation::bloc::person_list::person_list_cubit.dart::PersonError"
+
+class "untitled::features::home::presentation::bloc::search::search_bloc.dart::SearchBloc" {
+  +SearchPerson searchPerson
+  -FutureOr<void> _onEvent()
+  -String _mapFailureToMessage()
+}
+
+"untitled::features::home::presentation::bloc::search::search_bloc.dart::SearchBloc" o-- "untitled::features::home::domain::use_cases::search_person.dart::SearchPerson"
+"bloc::src::bloc.dart::Bloc" <|-- "untitled::features::home::presentation::bloc::search::search_bloc.dart::SearchBloc"
+
+abstract class "untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchEvent" {
+  +List<Object?> props
+}
+
+"equatable::src::equatable.dart::Equatable" <|-- "untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchEvent"
+
+class "untitled::features::home::presentation::bloc::search::search_bloc.dart::SearchPersons" {
+  +String personQuery
+}
+
+"untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchEvent" <|-- "untitled::features::home::presentation::bloc::search::search_bloc.dart::SearchPersons"
+
+abstract class "untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchState" {
+  +List<Object> props
+}
+
+"equatable::src::equatable.dart::Equatable" <|-- "untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchState"
+
+class "untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchEmpty" {
+}
+
+"untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchState" <|-- "untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchEmpty"
+
+class "untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchLoading" {
+}
+
+"untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchState" <|-- "untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchLoading"
+
+class "untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchLoaded" {
+  +List<PersonEntity> persons
+  +List<Object> props
+}
+
+"untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchState" <|-- "untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchLoaded"
+
+class "untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchError" {
+  +String message
+  +List<Object> props
+}
+
+"untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchState" <|-- "untitled::features::home::presentation::bloc::search::search_bloc.dart::PersonSearchError"
+
+class "untitled::features::home::presentation::pages::person_detail_screen.dart::PersonDetailPage" {
+  +PersonEntity person
+  +Widget build()
+  +List<Widget> buildText()
+}
+
+"untitled::features::home::presentation::pages::person_detail_screen.dart::PersonDetailPage" o-- "untitled::features::home::domain::entities::person_entity.dart::PersonEntity"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "untitled::features::home::presentation::pages::person_detail_screen.dart::PersonDetailPage"
+
+class "untitled::features::home::presentation::pages::person_screen.dart::HomePage" {
+  +Widget build()
+}
+
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "untitled::features::home::presentation::pages::person_screen.dart::HomePage"
+
+class "untitled::features::home::presentation::widgets::custom_search_delegate.dart::CustomSearchDelegate" {
+  -List<String> _suggestions
+  +List<Widget> buildActions()
+  +Widget buildLeading()
+  +Widget buildResults()
+  -Widget _showErrorText()
+  +Widget buildSuggestions()
+}
+
+"flutter::src::material::search.dart::SearchDelegate" <|-- "untitled::features::home::presentation::widgets::custom_search_delegate.dart::CustomSearchDelegate"
+
+class "untitled::features::home::presentation::widgets::persons_list_widget.dart::PersonsList" {
+  +ScrollController scrollController
+  +int page
+  +void setupScrollController()
+  +Widget build()
+  -Widget _loadingIndicator()
+}
+
+"untitled::features::home::presentation::widgets::persons_list_widget.dart::PersonsList" o-- "flutter::src::widgets::scroll_controller.dart::ScrollController"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "untitled::features::home::presentation::widgets::persons_list_widget.dart::PersonsList"
+
+class "untitled::features::home::presentation::widgets::person_cache_image_widget.dart::PersonCacheImage" {
+  +String imageUrl
+  +double? width
+  +double? height
+  -Widget _imageWidget()
+  +Widget build()
+}
+
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "untitled::features::home::presentation::widgets::person_cache_image_widget.dart::PersonCacheImage"
+
+class "untitled::features::home::presentation::widgets::person_card_widget.dart::PersonCard" {
+  +PersonEntity person
+  +Widget build()
+}
+
+"untitled::features::home::presentation::widgets::person_card_widget.dart::PersonCard" o-- "untitled::features::home::domain::entities::person_entity.dart::PersonEntity"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "untitled::features::home::presentation::widgets::person_card_widget.dart::PersonCard"
+
+class "untitled::features::home::presentation::widgets::search_result.dart::SearchResult" {
+  +PersonEntity personResult
+  +Widget build()
+}
+
+"untitled::features::home::presentation::widgets::search_result.dart::SearchResult" o-- "untitled::features::home::domain::entities::person_entity.dart::PersonEntity"
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "untitled::features::home::presentation::widgets::search_result.dart::SearchResult"
+
+class "untitled::main.dart::MyApp" {
+  +Widget build()
+}
+
+"flutter::src::widgets::framework.dart::StatelessWidget" <|-- "untitled::main.dart::MyApp"
+
+
+@enduml
